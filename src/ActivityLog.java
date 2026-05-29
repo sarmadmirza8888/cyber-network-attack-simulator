@@ -1,8 +1,6 @@
 import java.util.LinkedList;
 public class ActivityLog {
-
     private LinkedList<String> logs;
-
     public ActivityLog() {
         logs = new LinkedList<>();
     }
