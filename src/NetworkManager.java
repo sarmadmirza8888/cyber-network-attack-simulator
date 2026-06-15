@@ -1,6 +1,5 @@
 import java.util.ArrayList;
 import java.util.LinkedList;
-
 public class NetworkManager {
     private ArrayList<Device> devices;
     private LinkedList<Connection> connections;
