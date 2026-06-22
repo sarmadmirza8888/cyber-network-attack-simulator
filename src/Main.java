@@ -1,169 +1,156 @@
+import java.util.Scanner;
+
 public class Main {
 
     public static void main(String[] args) {
-
-        System.out.println("=================================");
-        System.out.println("CYBER ATTACK NETWORK SIMULATOR");
-        System.out.println("=================================");
-
-        // =====================================================
-        // MANAGERS
-        // =====================================================
-
-        NetworkManager networkManager =
-                new NetworkManager();
-
-        QueueManager queueManager =
-                new QueueManager();
-
-        Firewall firewall =
-                new Firewall();
-
-        RollBackManager rollbackManager =
-                new RollBackManager();
+        Scanner input = new Scanner(System.in);
+        NetworkManager networkManager = new NetworkManager();
         Graph graph = new Graph();
+        QueueManager queueManager = new QueueManager();
+        Firewall firewall = new Firewall();
         ThreatTree threatTree = new ThreatTree();
         MalwareSimulator malwareSimulator = new MalwareSimulator();
-        // =====================================================
-        // DEVICES
-        // =====================================================
-        Device pc1 = new Device("PC1", "192.168.1.10", "Computer");
-        Device router1 = new Device("Router1", "192.168.1.1", "Router");
-        Device server1 = new Device("Server1", "192.168.1.100", "Server");
-        Device firewallDevice = new Device("Firewall1", "192.168.1.254", "Firewall");
-        // =====================================================
-        // ADD DEVICES
-        // =====================================================
-        networkManager.addDevice(pc1);
-        networkManager.addDevice(router1);
-        networkManager.addDevice(server1);
-        networkManager.addDevice(firewallDevice);
-        networkManager.showAllDevices();
-        // =====================================================
-        // CONNECTIONS
-        // =====================================================
-        Connection c1 = new Connection(pc1, router1, 5);
-        Connection c2 = new Connection(router1, server1, 3);
-        Connection c3 = new Connection(server1, firewallDevice, 2);
-        networkManager.addConnection(c1);
-        networkManager.addConnection(c2);
-        networkManager.addConnection(c3);
-        networkManager.showConnections();
-        // =====================================================
-        // SAVE NETWORK STATE
-        // =====================================================
-        NetworkState state = new NetworkState(networkManager.getDevices()
-                );
-        rollbackManager.saveState(state);
-        // =====================================================
-        // GRAPH
-        // =====================================================
-        graph.addDevice(pc1);
-        graph.addDevice(router1);
-        graph.addDevice(server1);
-        graph.addDevice(firewallDevice);
-        graph.addConnection(pc1, router1);
-        graph.addConnection(router1, server1);
-        graph.addConnection(server1, firewallDevice);
-        graph.displayGraph();
-        // =====================================================
-        // THREATS (BST)
-        // =====================================================
-        Threat t1 = new Threat("Trojan", 8, "Steals user data");
-        Threat t2 = new Threat("Spyware", 4, "Monitors activity");
-        Threat t3 = new Threat("Ransomware", 10, "Encrypts files");
-        Threat t4 = new Threat("Worm", 6, "Self-spreading malware");
-        threatTree.insertThreat(t1);
-        threatTree.insertThreat(t2);
-        threatTree.insertThreat(t3);
-        threatTree.insertThreat(t4);
+        Bfs bfs = new Bfs();
+        Dfs dfs = new Dfs();
+        Dijkstra dijkstra = new Dijkstra();
+        boolean running = true;
+        while(running) {
+            System.out.println(
+                    "\n===== CYBER ATTACK NETWORK SIMULATOR ====="
+            );
+            System.out.println("1. Add Device");
+            System.out.println("2. Show Devices");
+            System.out.println("3. Connect Devices");
+            System.out.println("4. Show Connections");
+            System.out.println("5. Create Packet");
+            System.out.println("6. Process Packet Queue");
+            System.out.println("7. Run BFS");
+            System.out.println("8. Run DFS");
+            System.out.println("9. Run Dijkstra");
+            System.out.println("10. Malware Simulation");
+            System.out.println("11. Add Threat");
+            System.out.println("12. Show Threat Rankings");
+            System.out.println("13. Show Logs");
+            System.out.println("14. Exit");
+            int choice = input.nextInt();
+            input.nextLine();
+            switch(choice) {
+                case 1:
+                    System.out.print("Device Name: "
+                    );
+                    String name = input.nextLine();
+                    System.out.print(
+                            "IP Address: "
+                    );
+                    String ip = input.nextLine();
+                    System.out.print(
+                            "Type: "
+                    );
 
-        threatTree.displayThreats();
+                    String type = input.nextLine();
+                    Device device = new Device(name, ip, type);
+                    networkManager.addDevice(device);
+                    graph.addDevice(device);
+                    break;
+                case 2:
+                    networkManager.showAllDevices();
+                    break;
+                case 3:
+                    System.out.print("Source Device: ");
+                    String sourceName = input.nextLine();
+                    System.out.print("Destination Device: ");
+                    String destinationName = input.nextLine();
+                    Device source = networkManager.findDeviceByName(sourceName);
+                    Device destination = networkManager.findDeviceByName(destinationName);
+                    if(source != null && destination != null) {
+                        Connection connection = new Connection(source, destination, 1);
+                        networkManager.addConnection(connection);
+                        graph.addConnection(source, destination);
+                    }
+                    break;
+                case 4:
+                    networkManager.showConnections();
+                    break;
+                case 5:
+                    System.out.print("Source Device: ");
+                    sourceName = input.nextLine();
+                    System.out.print("Destination Device: ");
+                    destinationName =input.nextLine();
+                    source = networkManager.findDeviceByName(sourceName);
+                    destination = networkManager.findDeviceByName(destinationName);
+                    System.out.print("Payload: ");
+                    String payload = input.nextLine();
+                    Packet packet = new Packet(source, destination, payload, false);
+                    queueManager.enqueuePacket(packet
+                    );
+                    break;
+                case 6:
+                    if(!queueManager.isEmpty()) {
 
-        // =====================================================
-        // PACKETS
-        // =====================================================
+                        Packet current = queueManager.dequeuePacket();
 
-        Packet normalPacket =
-                new Packet(
-                        pc1,
-                        server1,
-                        "Hello Server",
-                        false
-                );
+                        if(firewall.inspectPacket(
+                                current
+                        )) {
 
-        Packet malwarePacket =
-                new Packet(
-                        pc1,
-                        server1,
-                        "Virus.exe",
-                        true
-                );
-
-        queueManager.enqueuePacket(normalPacket);
-        queueManager.enqueuePacket(malwarePacket);
-
-        queueManager.displayQueue();
-
-        // =====================================================
-        // PROCESS QUEUE
-        // =====================================================
-
-        while (!queueManager.isEmpty()) {
-
-            Packet currentPacket =
-                    queueManager.dequeuePacket();
-
-            if (firewall.inspectPacket(currentPacket)) {
-
-                networkManager.sendPacket(
-                        currentPacket
-                );
+                            networkManager.sendPacket(current
+                            );
+                        }
+                    }
+                    break;
+                case 7:
+                    System.out.print(
+                            "Start Device: ");
+                    String bfsStart = input.nextLine();
+                    Device bfsDevice = networkManager.findDeviceByName(bfsStart);
+                    bfs.traverse(graph, bfsDevice);
+                    break;
+                case 8:
+                    System.out.print("Start Device: ");
+                    String dfsStart = input.nextLine();
+                    Device dfsDevice = networkManager.findDeviceByName(dfsStart);
+                    dfs.traverse(graph, dfsDevice);
+                    break;
+                case 9:
+                    System.out.print("Source Device: ");
+                    String dijkstraStart = input.nextLine();
+                    Device dijkstraDevice = networkManager.findDeviceByName(dijkstraStart);
+                    dijkstra.shortestPath(graph, dijkstraDevice);
+                    break;
+                case 10:
+                    System.out.print("Infected Device: ");
+                    String infectedName = input.nextLine();
+                    Device infected = networkManager.findDeviceByName(infectedName);
+                    malwareSimulator.spreadMalware(graph, infected
+                    );
+                    break;
+                case 11:
+                    System.out.print("Threat Name: ");
+                    String threatName = input.nextLine();
+                    System.out.print("Severity: "
+                    );
+                    int severity = input.nextInt();
+                    input.nextLine();
+                    System.out.print("Description: "
+                    );
+                    String description = input.nextLine();
+                    threatTree.insertThreat(new Threat(threatName, severity, description
+                            )
+                    );
+                    break;
+                case 12:
+                    threatTree.displayThreats();
+                    break;
+                case 13:
+                    networkManager.showLogs();
+                    break;
+                case 14:
+                    running = false;
+                    System.out.println("Simulation Ended.");
+                    break;
+                default:
+                    System.out.println("Invalid Choice.");
             }
         }
-        // =====================================================
-        // BFS
-        // =====================================================
-        Bfs bfs = new Bfs();
-        bfs.traverse(
-                graph,
-                pc1
-        );
-        // =====================================================
-        // DFS
-        // =====================================================
-        Dfs dfs = new Dfs();
-        dfs.traverse(
-                graph,
-                pc1
-        );
-        // =====================================================
-        // DIJKSTRA
-        // =====================================================
-        Dijkstra dijkstra = new Dijkstra();
-        dijkstra.shortestPath(graph, pc1
-        );
-        // =====================================================
-        // MALWARE SIMULATION
-        // =====================================================
-        malwareSimulator.spreadMalware(graph, pc1);
-        // =====================================================
-        // LOGS
-        // =====================================================
-        networkManager.showLogs();
-        // =====================================================
-        // ROLLBACK
-        // =====================================================
-        rollbackManager.displaySavedStates();
-        rollbackManager.rollback();
-        rollbackManager.displaySavedStates();
-        // =====================================================
-        // VISUALIZER
-        // =====================================================
-        NetworkVisualizer visualizer = new NetworkVisualizer();
-        visualizer.displayNetwork(networkManager);
-        System.out.println(
-                "\nSimulation Completed Successfully."
-        );
     }
 }
